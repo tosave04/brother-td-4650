@@ -1,0 +1,10 @@
+[Unit]
+Description=Gunicorn instance to serve Flask ZPL print application
+After=network.target
+
+[Service]
+WorkingDirectory=/home/chemin/vers/le/script
+ExecStart=gunicorn -c gunicorn_config.py print:app
+
+[Install]
+WantedBy=multi-user.target

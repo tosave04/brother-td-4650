@@ -16,15 +16,15 @@ Environnement de test pour la création d'étiquettes pour imprimante ZPL.
 
 ## Installation imprimante en mode RAW (pour recevoir du ZPL)
 
-CUPS > Administration
+Interface CUPS (ex: `https://hostname:631`) > Administration
 
 Ajouter une imprimante
 
 Autres imprimantes réseau > AppSocket/HP JetDirect > Continuer
 
-socket://hostname:9100 > Continuer
+`socket://hostname:9100` > Continuer
 
-Nom d'imprimante facilement utilisable dans les scripts (ex: brother-zpl) > Continuer
+Nom d'imprimante facilement utilisable dans les scripts (ex: `brother-zpl`) > Continuer
 
 Marque > Raw > Continuer
 
@@ -61,9 +61,88 @@ Tester le bouton `Imprimer` de l'application
 
 ## Mise en production de l'API Flask
 
-TODO
+On utilise le serveur HTTP Python WSGI `Gunicorn` pour gérer notre script Flask en production.
 
-## Frameworks
+Le dossier python contient un exemple de script API pour gérer l'impression ZPL :
+
+- `print.py` : Script Flask API qui reçoit le signal ZPL, essaie de l'imprimer et gère les erreurs en retour
+
+- `gunicorn_config.py` : Fichier de configuration basique pour lancer un serveur Gunicorn
+
+- `gunicorn_zpl.service` : Exemple de fichier service systemd pour démarrer automatiquement Gunicorn
+
+### Installation de Gunicorn (sur Raspberry Pi) :
+
+```bash
+sudo apt-get install gunicorn
+```
+
+Pour tester le serveur, dans le dossier du script `print.py`
+
+### Utilisation en ligne de commande
+
+```bash
+gunicorn -w 1 -b 0.0.0.0:8000 print:app
+```
+
+- `-w` Nombre de workers (processus) à utiliser
+
+- `-b` Adresse et port sur lesquels Gunicorn écoutera les connexions
+
+- `print` Le nom du fichier contenant le script
+
+- `app` L'instance de Flask dans le script
+
+### Utilisation avec un fichier de configuration
+
+```bash
+gunicorn_config.py
+bind="0.0.0.0:8000"
+workers=1
+```
+
+`gunicorn -c gunicorn_config.py print:app`
+
+## Démarrage automatique de Gunicorn
+
+### Création du service
+
+`sudo nano /etc/systemd/system/gunicorn_zpl.service`
+
+```bash
+[Unit]
+Description=Gunicorn instance to serve Flask ZPL print application 
+After=network.target
+
+[Service]
+WorkingDirectory=/home/chemin/vers/app/flask
+ExecStart=/home/chemin/vers/script/flask/gunicorn -c gunicorn_config.py print:app
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# On recharge la configuration du gestionnaire systemctl
+sudo systemctl daemon-reload
+
+# On démarre et on active notre nouveau service
+sudo systemctl start myapp
+sudo systemctl enable myapp
+```
+
+### Modification du service
+
+`sudo nano /etc/systemd/system/gunicorn_zpl.service`
+
+Après modification il faut recharger le gestionnaire et le service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart myapp
+```
+
+## Next.js
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
