@@ -7,20 +7,35 @@ app = Flask(__name__)
 # Port d'exécution du serveur
 PORT = 8000
 
-@app.route('/impression', methods=['POST'])
+# Client qui doit être autorisé à accéder à l'API
+CLIENT = '*'
+
+@app.route('/impression', methods=['GET', 'POST'])
 def print():
     # On récupère la data de la requête POST
     try:
-        raw_data = request.get_data().decode()
-        json_data = json.loads(raw_data)
+        # Si la requête est de type GET, on récupère les variables dans l'URL
+        if request.method == 'GET':
+            printer_name = request.args.get('printer_name')
+            printer_ip = request.args.get('printer_ip')
+            zpl = request.args.get('zpl')
 
-        # On vérifie si les paramètres printer_name, printer_ip et zpl sont définis
-        if 'printer_name' not in json_data or 'printer_ip' not in json_data or 'zpl' not in json_data:
-            raise ValueError(f"Les paramètres printer_name, printer_ip et zpl sont obligatoires")
+            # Si les paramètres printer_name, printer_ip et zpl ne sont pas définis
+            if printer_name is None or printer_ip is None or zpl is None:
+                raise ValueError(f"Les paramètres printer_name, printer_ip et zpl sont obligatoires")
+            
+        # Si la requête est de type POST, on récupère les variables dans le corps de la requête
+        elif request.method == 'POST':
+            raw_data = request.get_data().decode()
+            json_data = json.loads(raw_data)
 
-        printer_name = json_data['printer_name']
-        printer_ip = json_data['printer_ip']
-        zpl = json_data['zpl']
+            # On vérifie si les paramètres printer_name, printer_ip et zpl sont définis
+            if 'printer_name' not in json_data or 'printer_ip' not in json_data or 'zpl' not in json_data:
+                raise ValueError(f"Les paramètres printer_name, printer_ip et zpl sont obligatoires")
+
+            printer_name = json_data['printer_name']
+            printer_ip = json_data['printer_ip']
+            zpl = json_data['zpl']
 
         # Si zpl n'est pas de type texte
         if not isinstance(zpl, str):
@@ -32,7 +47,7 @@ def print():
         
     except ValueError as e:
         response = jsonify({'erreur': str(e)})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', CLIENT)
         response.status_code = 400
         return response
 
@@ -46,7 +61,7 @@ def print():
         
     except (ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         response = jsonify({'erreur': str(e)})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', CLIENT)
         response.status_code = 404
         return response
 
@@ -56,13 +71,13 @@ def print():
         subprocess.run(print_zpl_cmd, shell=True, check=True)
 
         response = jsonify({'message': f"Impression réussie"})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', CLIENT)
         response.status_code = 200
         return response
 
     except Exception as e:
         response = jsonify({'erreur': f"Erreur lors de l'impression du ZPL"})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', CLIENT)
         response.status_code = 500
         return response
 
