@@ -14,6 +14,12 @@ Environnement de test pour la création d'étiquettes pour imprimante ZPL.
 
 - Bouton `Imprimer` pour envoyer le ZPL à l'API d'impression Flask
 
+## Remerciements
+
+DanieLeeuwner pour son générateur ZPL II JavaScript
+
+https://github.com/DanieLeeuwner/JSZPL
+
 ## Installation imprimante en mode RAW (pour recevoir du ZPL)
 
 Interface CUPS (ex: `https://hostname:631`) > Administration
