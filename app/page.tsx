@@ -22,8 +22,16 @@ export default function Home() {
 	// On récupère le label au format ZPL
 	useEffect(() => {
 		const getLabel = async () => {
-			const label = jszpl()
-			setLabel(label)
+			const label = jszpl({
+				name: "NOM_CLIENT",
+				reference: "REF_COMMANDE",
+				article: "REF_ARTICLE",
+				type: "AXE",
+				details: "2500 MM - INTERIEUR",
+				quantity: 1,
+				packets: 1,
+			})
+			if (label !== null) setLabel(label)
 		}
 		getLabel()
 	}, [])
